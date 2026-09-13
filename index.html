@@ -273,13 +273,14 @@ p { margin: 0; }
   .bf-tcols[data-paused="true"] .bf-ttrack { animation-play-state: running; }
   .bf-ttrack { animation-duration: calc(var(--dur, 40s) * 0.45); }
 
-  /* --- 4. Galerie : moins d images, plus grandes, mieux espacees --- */
+  /* --- 4. Galerie : 4 photos de tailles proches, toujours espacees --- */
   /* scene calee sur la hauteur reellement occupee par les photos :
      plus de bande vide au-dessus du flux */
-  .bf-strm { height: clamp(400px, 105vw, 520px); }
-  /* perspective allongee : la profondeur ecrase beaucoup moins les photos
-     eloignees, donc aucune vignette minuscule au fond du flux */
-  .bf-strm-stage { perspective: 70cqw; perspective-origin: 50% 50%; }
+  .bf-strm { height: clamp(190px, 50vw, 300px); }
+  /* perspective tres longue : les quatre photos gardent des tailles proches,
+     ce qui laisse un ecart franc entre elles au lieu de les faire se
+     chevaucher quand celle du premier plan devient enorme */
+  .bf-strm-stage { perspective: 160cqw; perspective-origin: 50% 50%; }
   /* 2 cartes par rail : les deux rails sont dephases pour ne jamais
      presenter deux grandes images au meme instant */
   .bf-strm-card:nth-child(-n+12):not(:nth-child(6n+1)) { display: none; }
@@ -287,7 +288,7 @@ p { margin: 0; }
   .bf-strm-card {
     --dur: 16s;
     top: 50%;
-    width: 58cqw; height: 78cqw; margin-left: -29cqw; margin-top: -39cqw; border-radius: 1.6cqw;
+    width: 24cqw; height: 32cqw; margin-left: -12cqw; margin-top: -16cqw; border-radius: 1.2cqw;
   }
 }
 
