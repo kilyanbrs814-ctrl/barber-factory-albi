@@ -1,0 +1,765 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@300;400;500;600;700&amp;family=Barlow:wght@300;400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
+body { margin: 0; background: #06080c; color: #f4f1ea; font-family: Barlow, system-ui, sans-serif; overflow-x: clip; }
+img { display: block; max-width: 100%; }
+a { color: #e0be6e; text-decoration: none; }
+a:hover { color: #f4dda0; }
+:focus-visible { outline: 2px solid #e0be6e; outline-offset: 3px; }
+h1, h2, h3 { margin: 0; font-family: Oswald, Impact, sans-serif; font-weight: 600; letter-spacing: 0.02em; }
+p { margin: 0; }
+
+/* ============================================================
+   Barber Factory - effets immersifs (mobile-first)
+   ============================================================ */
+
+/* --- Fond global : echelle stable, insensible a la barre d'adresse --- */
+.bf-bg, .bf-bg-veil {
+  position: fixed; top: 0; left: 0; width: 100%;
+  height: 100vh;  /* repli navigateurs anciens */
+  height: 100lvh; /* hauteur figee : ne suit pas la barre d'adresse mobile */
+  z-index: 0; pointer-events: none;
+}
+.bf-bg { background-size: cover; background-position: center; background-repeat: no-repeat; }
+.bf-bg-veil { background: linear-gradient(180deg, rgba(4,6,10,0.34), rgba(4,6,10,0.5)); }
+
+/* --- 1. Bandeau des notes + separateur vertical --- */
+.bf-notes {
+  display: flex; align-items: center; justify-content: center; flex-wrap: nowrap;
+  gap: clamp(10px, 3.2vw, 26px); padding: 20px clamp(10px, 3vw, 28px);
+  background: rgba(6,9,14,0.72);
+}
+.bf-note { display: flex; align-items: baseline; gap: clamp(5px, 1.6vw, 8px); white-space: nowrap; }
+.bf-note-val { font-family: Oswald, sans-serif; font-size: clamp(25px, 7vw, 32px); color: #f0d18c; }
+.bf-note-txt { font-size: clamp(12.5px, 3.4vw, 16px); line-height: 1.35; color: #f4f1ea; }
+.bf-note-sub { color: rgba(244,241,234,0.72); }
+.bf-note-sep {
+  flex: none; align-self: stretch; width: 1px; min-height: 40px; border-radius: 1px;
+  background: linear-gradient(180deg, rgba(201,162,74,0) 0%, rgba(201,162,74,0.8) 50%, rgba(201,162,74,0) 100%);
+}
+
+/* --- 2. Adresse du hero cliquable --- */
+.bf-addr {
+  display: flex; align-items: center; justify-content: center; gap: 9px;
+  width: 100%; min-height: 62px; padding: 14px clamp(12px, 4vw, 28px);
+  background: rgba(6,9,14,0.72); text-align: center;
+  font-size: 16px; line-height: 1.45; color: #f4f1ea;
+}
+.bf-addr .bf-addr-txt { border-bottom: 1px solid rgba(201,162,74,0.5); padding-bottom: 2px; }
+.bf-addr:hover, .bf-addr:focus-visible { color: #f4dda0; }
+.bf-addr:hover .bf-addr-txt, .bf-addr:focus-visible .bf-addr-txt { border-bottom-color: #f4dda0; }
+.bf-addr svg { flex: none; }
+
+/* --- 3. Tarifs dans l'ecran anime (container scroll) --- */
+.bf-cs { --p: 1; --rot: 11deg; --scale0: 0.95; --ty: -20px; perspective: 1500px; }
+.bf-cs-head { transform: translate3d(0, calc(var(--ty) * var(--p)), 0); will-change: transform; }
+.bf-cs-card {
+  margin-top: clamp(16px, 4vw, 26px);
+  transform: rotateX(calc(var(--rot) * (1 - var(--p)))) scale(calc(var(--scale0) + (1 - var(--scale0)) * var(--p)));
+  will-change: transform;
+  padding: 7px; border: 2px solid rgba(201,162,74,0.42); border-radius: 18px;
+  background: rgba(8,11,17,0.85);
+  box-shadow: 0 9px 20px rgba(0,0,0,0.29), 0 37px 37px rgba(0,0,0,0.26), 0 84px 50px rgba(0,0,0,0.15);
+}
+.bf-cs-screen {
+  border-radius: 12px; overflow: hidden; background: rgba(4,6,10,0.5);
+  padding: clamp(10px, 3vw, 16px);
+}
+.bf-cs-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: clamp(14px, 3vw, 20px); }
+@media (min-width: 820px) {
+  .bf-cs { --rot: 20deg; --scale0: 1.04; --ty: -54px; perspective: 1000px; }
+  .bf-cs-card { padding: 13px; border-width: 3px; border-radius: 26px; }
+  .bf-cs-screen { border-radius: 16px; padding: clamp(16px, 2vw, 24px); }
+  .bf-cs-grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+}
+
+/* --- 4. Avis : colonnes animees --- */
+.bf-tstats { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; margin-top: clamp(22px, 4vw, 36px); }
+@media (min-width: 620px) { .bf-tstats { grid-template-columns: 1fr 1fr; gap: 16px; } }
+.bf-tstat {
+  display: flex; align-items: center; gap: clamp(10px, 2.5vw, 16px); flex-wrap: wrap;
+  padding: 14px clamp(14px, 3vw, 20px); background: rgba(6,9,14,0.66);
+  border: 1px solid rgba(201,162,74,0.34); border-radius: 4px;
+}
+.bf-tstat-planity { border-color: rgba(47,123,255,0.45); }
+.bf-tstat-val { font-family: Oswald, sans-serif; font-size: clamp(30px, 8vw, 40px); line-height: 1; color: #f4f1ea; }
+.bf-tstat-meta { font-size: 13px; line-height: 1.4; color: rgba(244,241,234,0.6); }
+.bf-tstat-link {
+  display: flex; align-items: center; justify-content: center; min-height: 44px;
+  margin-left: auto; padding: 0 16px; border-radius: 3px;
+  font-family: Oswald, sans-serif; font-size: 12.5px; letter-spacing: 0.1em; text-transform: uppercase;
+  background: rgba(255,255,255,0.05); border: 1px solid rgba(201,162,74,0.5); color: #e0be6e;
+}
+.bf-tstat-planity .bf-tstat-link { background: rgba(47,123,255,0.14); border-color: rgba(47,123,255,0.55); color: #cfe0ff; }
+.bf-tbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: clamp(22px, 4vw, 34px); }
+.bf-tbar-note { font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: rgba(244,241,234,0.45); }
+.bf-tpause {
+  flex: none; display: inline-flex; align-items: center; gap: 8px;
+  min-height: 44px; padding: 0 16px; cursor: pointer; border-radius: 3px;
+  background: rgba(255,255,255,0.05); border: 1px solid rgba(244,241,234,0.28); color: #f4f1ea;
+  font-family: Oswald, sans-serif; font-size: 12.5px; letter-spacing: 0.1em; text-transform: uppercase;
+}
+.bf-tcols {
+  display: grid; grid-template-columns: minmax(0, 1fr); gap: clamp(12px, 2.4vw, 20px);
+  margin-top: 14px; max-height: clamp(440px, 76vh, 640px); overflow: hidden;
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0%, #000 13%, #000 87%, transparent 100%);
+  mask-image: linear-gradient(to bottom, transparent 0%, #000 13%, #000 87%, transparent 100%);
+}
+@media (min-width: 700px) { .bf-tcols { grid-template-columns: 1fr 1fr; } }
+@media (min-width: 1020px) { .bf-tcols { grid-template-columns: 1fr 1fr 1fr; } }
+.bf-tcol { overflow: hidden; min-width: 0; }
+.bf-ttrack {
+  --g: clamp(12px, 2.4vw, 18px);
+  display: flex; flex-direction: column; gap: var(--g); padding-bottom: var(--g);
+  animation: bf-marquee var(--dur, 40s) linear infinite; will-change: transform;
+}
+@keyframes bf-marquee { from { transform: translate3d(0,0,0); } to { transform: translate3d(0,-50%,0); } }
+.bf-tcols:hover .bf-ttrack,
+.bf-tcols:focus-within .bf-ttrack,
+.bf-tcols[data-paused="true"] .bf-ttrack { animation-play-state: paused; }
+.bf-tcard {
+  padding: clamp(16px, 4vw, 22px); border-radius: 4px;
+  background: rgba(6,9,14,0.72); border: 1px solid rgba(201,162,74,0.3);
+}
+.bf-tcard-planity { border-color: rgba(47,123,255,0.42); }
+.bf-tcard-txt { font-size: 15px; line-height: 1.55; color: rgba(244,241,234,0.9); }
+.bf-tcard-foot { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 14px; }
+.bf-tcard-nom { font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: rgba(244,241,234,0.5); }
+.bf-tcard-src {
+  flex: none; padding: 3px 9px; border-radius: 999px;
+  font-size: 10.5px; letter-spacing: 0.14em; text-transform: uppercase;
+  border: 1px solid rgba(201,162,74,0.45); color: #e0be6e;
+}
+.bf-tcard-planity .bf-tcard-src { border-color: rgba(47,123,255,0.5); color: #6f9dff; }
+
+/* --- 6. Galerie immersive : experience Barber Factory --- */
+.bf-imm { --p: 0; --o: 1; position: relative; height: 185vh; }
+.bf-imm-sticky {
+  position: sticky; top: 0; overflow: hidden;
+  height: 100vh; height: 100lvh;
+}
+.bf-imm-layer {
+  position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+  display: flex; align-items: center; justify-content: center; opacity: var(--o);
+}
+.bf-imm-item {
+  position: relative; overflow: hidden; border-radius: 4px;
+  border: 1px solid rgba(201,162,74,0.28);
+  transform: scale(calc(1 + (var(--s) - 1) * var(--p))); will-change: transform;
+}
+.bf-imm-item img { width: 100%; height: 100%; object-fit: cover; }
+.bf-imm-1 { width: 62vw; height: 33vh; --s: 4; }
+.bf-imm-2 { width: 42vw; height: 22vh; top: -27vh; left: 6vw; --s: 5; }
+.bf-imm-3 { width: 34vw; height: 30vh; top: -3vh; left: -30vw; --s: 6; }
+.bf-imm-4 { width: 48vw; height: 24vh; top: 31vh; left: -3vw; --s: 5; }
+@media (min-width: 820px) {
+  .bf-imm { height: 200vh; }
+  .bf-imm-1 { width: 25vw; height: 25vh; --s: 4; }
+  .bf-imm-2 { width: 35vw; height: 30vh; top: -30vh; left: 5vw; --s: 5; }
+  .bf-imm-3 { width: 20vw; height: 55vh; top: -15vh; left: -25vw; --s: 6; }
+  .bf-imm-4 { width: 30vw; height: 25vh; top: 27.5vh; left: -22.5vw; --s: 5; }
+  .bf-imm-5 { width: 22vw; height: 25vh; top: -1vh; left: 27vw; --s: 6; }
+  .bf-imm-6 { width: 20vw; height: 21vh; top: 29.5vh; left: 5vw; --s: 8; }
+  .bf-imm-7 { width: 18vw; height: 22vh; top: 29.5vh; left: 27vw; --s: 9; }
+}
+
+/* --- 7. Galerie : flux d'images en perspective --- */
+.bf-strm {
+  position: relative; overflow: hidden; container-type: inline-size;
+  height: clamp(340px, 88vw, 430px);
+  border-block: 1px solid rgba(201,162,74,0.2);
+}
+@media (min-width: 820px) { .bf-strm { height: min(600px, 58vw); } }
+.bf-strm-stage {
+  pointer-events: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+  perspective: 30cqw; perspective-origin: 50% 52%;
+}
+.bf-strm-inner { position: absolute; top: 0; left: 0; width: 100%; height: 100%; transform-style: preserve-3d; }
+.bf-strm-card {
+  position: absolute; left: 50%; top: 55%; overflow: hidden; backface-visibility: hidden;
+  width: 32cqw; height: 42cqw; margin-left: -16cqw; margin-top: -21cqw; border-radius: 0.9cqw;
+  animation-duration: var(--dur, 22s); animation-timing-function: linear;
+  animation-iteration-count: infinite; animation-delay: var(--delay, 0s);
+}
+.bf-strm-r { animation-name: bf-strm-rm; }
+.bf-strm-l { animation-name: bf-strm-lm; }
+.bf-strm-card img { width: 100%; height: 100%; object-fit: cover; }
+@media (min-width: 820px) {
+  .bf-strm-card { width: 18cqw; height: 25cqw; margin-left: -9cqw; margin-top: -12.5cqw; border-radius: 0.4cqw; }
+  .bf-strm-r { animation-name: bf-strm-r; }
+  .bf-strm-l { animation-name: bf-strm-l; }
+}
+
+/* ============================================================
+   Ajustements MOBILE uniquement (< 820px). Le desktop n est pas touche.
+   ============================================================ */
+@media (max-width: 819px) {
+
+  /* --- 1. Prestations : une plaque inclinee par forfait --- */
+  /* le cadre unique s efface, chaque forfait devient sa propre plaque */
+  .bf-cs { perspective: none; }
+  .bf-cs-card {
+    transform: none; will-change: auto;
+    padding: 0; border: 0; border-radius: 0; background: none; box-shadow: none;
+  }
+  .bf-cs-screen { padding: 0; border-radius: 0; overflow: visible; background: none; }
+  .bf-cs-grid { perspective: 1200px; perspective-origin: 50% 50%; gap: clamp(24px, 6vw, 36px); }
+  .bf-cs-grid > div {
+    --pp: 1;
+    transform: rotateX(calc(26deg * (1 - var(--pp)))) scale(calc(0.93 + 0.07 * var(--pp)));
+    will-change: transform;
+    border: 2px solid rgba(201,162,74,0.45) !important;
+    border-radius: 18px !important;
+    background: rgba(8,11,17,0.86) !important;
+    box-shadow: 0 9px 20px rgba(0,0,0,0.3), 0 30px 34px rgba(0,0,0,0.26), 0 70px 48px rgba(0,0,0,0.14) !important;
+  }
+
+  /* --- 2. Experience : composition sans aucun chevauchement --- */
+  /* l image s efface exactement au rythme ou la section Qualite apparait,
+     les deux au meme endroit de l ecran */
+  .bf-imm-layer { display: block; opacity: calc(1 - var(--fade, 0)); }
+  .bf-imm-item {
+    position: absolute;
+    left: var(--x); top: var(--y); width: var(--w) !important; height: var(--h) !important;
+    transform: translate(calc(var(--dx) * var(--p)), calc(var(--dy) * var(--p)))
+               scale(calc(1 + (var(--s) - 1) * var(--p)));
+  }
+  /* image principale : reste centree, grandit, puis disparait */
+  .bf-imm-1 { --x: 30%; --y: 31%; --w: 40%; --h: 28%; --s: 1.6;  --dx: 0%;    --dy: 0%; }
+  /* les six autres s ecartent vers l exterieur : les ecarts grandissent */
+  .bf-imm-2 { --x: 5%;  --y: 6%;  --w: 42%; --h: 20%; --s: 1.3;  --dx: -55%;  --dy: -130%; }
+  .bf-imm-3 { --x: 53%; --y: 10%; --w: 42%; --h: 17%; --s: 1.3;  --dx: 60%;   --dy: -160%; }
+  .bf-imm-4 { --x: 5%;  --y: 63%; --w: 44%; --h: 21%; --s: 1.35; --dx: -30%;  --dy: 190%; }
+  .bf-imm-5 { --x: 3%;  --y: 35%; --w: 24%; --h: 20%; --s: 1.2;  --dx: -120%; --dy: 0%; }
+  .bf-imm-6 { --x: 73%; --y: 35%; --w: 24%; --h: 20%; --s: 1.2;  --dx: 120%;  --dy: 0%; }
+  .bf-imm-7 { --x: 53%; --y: 66%; --w: 42%; --h: 20%; --s: 1.35; --dx: 40%;   --dy: 220%; }
+  /* Scene commune : pendant le fondu, l ecran des photos ET la section
+     Qualite sont epingles en haut de viewport au meme instant. Ils occupent
+     donc exactement la meme zone : substitution sur place, aucun mouvement
+     vertical, aucune arrivee par le bas.
+       - course d epinglage = 105vh : 60vh de zoom puis 45vh de fondu
+       - le padding de la scene fournit les 45vh de course au sticky de Qualite */
+  .bf-stage::after { content: ""; display: block; height: 45vh; }
+  .bf-imm { height: calc(100lvh + 105vh); margin-bottom: 0; }
+  .bf-imm-apres {
+    position: sticky; top: 0; z-index: 1;
+    margin-top: calc(-100lvh - 45vh);
+    min-height: 100lvh;
+    /* le bloc se superpose pile sur l ecran des photos ; seul son contenu
+       est decale pour passer sous le header colle en haut */
+    padding-top: 68px;
+    opacity: var(--fade, 0);
+  }
+
+  /* --- 3. Avis : defilement automatique, jamais interrompu --- */
+  .bf-tpause { display: none; }
+  .bf-tbar { justify-content: flex-start; }
+  .bf-tcols:hover .bf-ttrack,
+  .bf-tcols:focus-within .bf-ttrack,
+  .bf-tcols[data-paused="true"] .bf-ttrack { animation-play-state: running; }
+  .bf-ttrack { animation-duration: calc(var(--dur, 40s) * 0.45); }
+
+  /* --- 4. Galerie : moins d images, plus grandes, mieux espacees --- */
+  .bf-strm { height: clamp(400px, 115vw, 500px); }
+  /* 2 cartes par rail : les deux rails sont dephases pour ne jamais
+     presenter deux grandes images au meme instant */
+  .bf-strm-card:nth-child(-n+12):not(:nth-child(6n+1)) { display: none; }
+  .bf-strm-card:nth-child(n+13):not(:nth-child(6n+4)) { display: none; }
+  .bf-strm-card {
+    width: 40cqw; height: 56cqw; margin-left: -20cqw; margin-top: -28cqw; border-radius: 1.2cqw;
+  }
+}
+
+/* --- Mouvement reduit : tout reste lisible et accessible --- */
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  .bf-cs { --p: 1; }
+  .bf-cs-head, .bf-cs-card { transform: none; }
+  .bf-ttrack { animation: none; }
+  .bf-tcols { max-height: none; -webkit-mask-image: none; mask-image: none; }
+  .bf-tpause { display: none; }
+  .bf-imm { height: auto; margin-bottom: 0; }
+  .bf-stage::after { height: 0; }
+  .bf-imm-apres { position: static; margin-top: 0; min-height: 0; padding-top: 0; opacity: 1; }
+  .bf-imm-sticky { position: static; height: auto; display: grid; grid-template-columns: 1fr 1fr; gap: clamp(10px, 2vw, 18px); }
+  .bf-imm-layer { position: static; width: auto; height: auto; display: block; opacity: 1; }
+  .bf-imm-layer:last-child { grid-column: 1 / -1; }
+  .bf-imm-item {
+    position: relative !important;
+    top: auto !important; left: auto !important;
+    width: 100% !important; height: clamp(150px, 30vw, 250px) !important; transform: none !important;
+  }
+  .bf-strm-card { animation-play-state: paused; }
+}
+
+/* --- keyframes du flux d images (formules du composant image-stream-hero) --- */
+@keyframes bf-strm-r{0.00%{transform:translate3d(-11.00cqw,0,-258.46cqw) rotateY(-6.00deg)}4.17%{transform:translate3d(-3.79cqw,0,-225.92cqw) rotateY(-6.92deg)}8.33%{transform:translate3d(2.73cqw,0,-197.04cqw) rotateY(-7.83deg)}12.50%{transform:translate3d(8.60cqw,0,-171.43cqw) rotateY(-8.75deg)}16.67%{transform:translate3d(13.87cqw,0,-148.70cqw) rotateY(-9.67deg)}20.83%{transform:translate3d(18.56cqw,0,-128.54cqw) rotateY(-10.58deg)}25.00%{transform:translate3d(22.72cqw,0,-110.65cqw) rotateY(-11.50deg)}29.17%{transform:translate3d(26.37cqw,0,-94.78cqw) rotateY(-12.42deg)}33.33%{transform:translate3d(29.57cqw,0,-80.70cqw) rotateY(-13.33deg)}37.50%{transform:translate3d(32.34cqw,0,-68.21cqw) rotateY(-14.25deg)}41.67%{transform:translate3d(34.71cqw,0,-57.13cqw) rotateY(-15.17deg)}45.83%{transform:translate3d(36.73cqw,0,-47.30cqw) rotateY(-16.08deg)}50.00%{transform:translate3d(38.42cqw,0,-38.58cqw) rotateY(-17.00deg)}54.17%{transform:translate3d(39.81cqw,0,-30.84cqw) rotateY(-17.92deg)}58.33%{transform:translate3d(40.94cqw,0,-23.98cqw) rotateY(-18.83deg)}62.50%{transform:translate3d(41.84cqw,0,-17.89cqw) rotateY(-19.75deg)}66.67%{transform:translate3d(42.53cqw,0,-12.48cqw) rotateY(-20.67deg)}70.83%{transform:translate3d(43.06cqw,0,-7.69cqw) rotateY(-21.58deg)}75.00%{transform:translate3d(43.43cqw,0,-3.44cqw) rotateY(-22.50deg)}79.17%{transform:translate3d(43.69cqw,0,0.33cqw) rotateY(-23.42deg)}83.33%{transform:translate3d(43.85cqw,0,3.68cqw) rotateY(-24.33deg)}87.50%{transform:translate3d(43.94cqw,0,6.65cqw) rotateY(-25.25deg)}91.67%{transform:translate3d(43.98cqw,0,9.28cqw) rotateY(-26.17deg)}95.83%{transform:translate3d(44.00cqw,0,11.62cqw) rotateY(-27.08deg)}100.00%{transform:translate3d(44.00cqw,0,13.70cqw) rotateY(-28.00deg)}}
+@keyframes bf-strm-l{0.00%{transform:translate3d(11.00cqw,0,-258.46cqw) rotateY(6.00deg)}4.17%{transform:translate3d(3.79cqw,0,-225.92cqw) rotateY(6.92deg)}8.33%{transform:translate3d(-2.73cqw,0,-197.04cqw) rotateY(7.83deg)}12.50%{transform:translate3d(-8.60cqw,0,-171.43cqw) rotateY(8.75deg)}16.67%{transform:translate3d(-13.87cqw,0,-148.70cqw) rotateY(9.67deg)}20.83%{transform:translate3d(-18.56cqw,0,-128.54cqw) rotateY(10.58deg)}25.00%{transform:translate3d(-22.72cqw,0,-110.65cqw) rotateY(11.50deg)}29.17%{transform:translate3d(-26.37cqw,0,-94.78cqw) rotateY(12.42deg)}33.33%{transform:translate3d(-29.57cqw,0,-80.70cqw) rotateY(13.33deg)}37.50%{transform:translate3d(-32.34cqw,0,-68.21cqw) rotateY(14.25deg)}41.67%{transform:translate3d(-34.71cqw,0,-57.13cqw) rotateY(15.17deg)}45.83%{transform:translate3d(-36.73cqw,0,-47.30cqw) rotateY(16.08deg)}50.00%{transform:translate3d(-38.42cqw,0,-38.58cqw) rotateY(17.00deg)}54.17%{transform:translate3d(-39.81cqw,0,-30.84cqw) rotateY(17.92deg)}58.33%{transform:translate3d(-40.94cqw,0,-23.98cqw) rotateY(18.83deg)}62.50%{transform:translate3d(-41.84cqw,0,-17.89cqw) rotateY(19.75deg)}66.67%{transform:translate3d(-42.53cqw,0,-12.48cqw) rotateY(20.67deg)}70.83%{transform:translate3d(-43.06cqw,0,-7.69cqw) rotateY(21.58deg)}75.00%{transform:translate3d(-43.43cqw,0,-3.44cqw) rotateY(22.50deg)}79.17%{transform:translate3d(-43.69cqw,0,0.33cqw) rotateY(23.42deg)}83.33%{transform:translate3d(-43.85cqw,0,3.68cqw) rotateY(24.33deg)}87.50%{transform:translate3d(-43.94cqw,0,6.65cqw) rotateY(25.25deg)}91.67%{transform:translate3d(-43.98cqw,0,9.28cqw) rotateY(26.17deg)}95.83%{transform:translate3d(-44.00cqw,0,11.62cqw) rotateY(27.08deg)}100.00%{transform:translate3d(-44.00cqw,0,13.70cqw) rotateY(28.00deg)}}
+@keyframes bf-strm-rm{0.00%{transform:translate3d(24.00cqw,0,-110.00cqw) rotateY(-4.00deg)}4.17%{transform:translate3d(25.09cqw,0,-98.38cqw) rotateY(-4.50deg)}8.33%{transform:translate3d(26.20cqw,0,-87.73cqw) rotateY(-5.00deg)}12.50%{transform:translate3d(27.33cqw,0,-77.95cqw) rotateY(-5.50deg)}16.67%{transform:translate3d(28.47cqw,0,-68.99cqw) rotateY(-6.00deg)}20.83%{transform:translate3d(29.64cqw,0,-60.78cqw) rotateY(-6.50deg)}25.00%{transform:translate3d(30.82cqw,0,-53.24cqw) rotateY(-7.00deg)}29.17%{transform:translate3d(32.03cqw,0,-46.34cqw) rotateY(-7.50deg)}33.33%{transform:translate3d(33.27cqw,0,-40.00cqw) rotateY(-8.00deg)}37.50%{transform:translate3d(34.53cqw,0,-34.19cqw) rotateY(-8.50deg)}41.67%{transform:translate3d(35.82cqw,0,-28.86cqw) rotateY(-9.00deg)}45.83%{transform:translate3d(37.15cqw,0,-23.98cqw) rotateY(-9.50deg)}50.00%{transform:translate3d(38.51cqw,0,-19.50cqw) rotateY(-10.00deg)}54.17%{transform:translate3d(39.91cqw,0,-15.39cqw) rotateY(-10.50deg)}58.33%{transform:translate3d(41.36cqw,0,-11.62cqw) rotateY(-11.00deg)}62.50%{transform:translate3d(42.86cqw,0,-8.17cqw) rotateY(-11.50deg)}66.67%{transform:translate3d(44.41cqw,0,-5.00cqw) rotateY(-12.00deg)}70.83%{transform:translate3d(46.04cqw,0,-2.10cqw) rotateY(-12.50deg)}75.00%{transform:translate3d(47.75cqw,0,0.57cqw) rotateY(-13.00deg)}79.17%{transform:translate3d(49.57cqw,0,3.01cqw) rotateY(-13.50deg)}83.33%{transform:translate3d(51.52cqw,0,5.25cqw) rotateY(-14.00deg)}87.50%{transform:translate3d(53.65cqw,0,7.31cqw) rotateY(-14.50deg)}91.67%{transform:translate3d(56.05cqw,0,9.19cqw) rotateY(-15.00deg)}95.83%{transform:translate3d(58.93cqw,0,10.92cqw) rotateY(-15.50deg)}100.00%{transform:translate3d(64.00cqw,0,12.50cqw) rotateY(-16.00deg)}}
+@keyframes bf-strm-lm{0.00%{transform:translate3d(-24.00cqw,0,-110.00cqw) rotateY(4.00deg)}4.17%{transform:translate3d(-25.09cqw,0,-98.38cqw) rotateY(4.50deg)}8.33%{transform:translate3d(-26.20cqw,0,-87.73cqw) rotateY(5.00deg)}12.50%{transform:translate3d(-27.33cqw,0,-77.95cqw) rotateY(5.50deg)}16.67%{transform:translate3d(-28.47cqw,0,-68.99cqw) rotateY(6.00deg)}20.83%{transform:translate3d(-29.64cqw,0,-60.78cqw) rotateY(6.50deg)}25.00%{transform:translate3d(-30.82cqw,0,-53.24cqw) rotateY(7.00deg)}29.17%{transform:translate3d(-32.03cqw,0,-46.34cqw) rotateY(7.50deg)}33.33%{transform:translate3d(-33.27cqw,0,-40.00cqw) rotateY(8.00deg)}37.50%{transform:translate3d(-34.53cqw,0,-34.19cqw) rotateY(8.50deg)}41.67%{transform:translate3d(-35.82cqw,0,-28.86cqw) rotateY(9.00deg)}45.83%{transform:translate3d(-37.15cqw,0,-23.98cqw) rotateY(9.50deg)}50.00%{transform:translate3d(-38.51cqw,0,-19.50cqw) rotateY(10.00deg)}54.17%{transform:translate3d(-39.91cqw,0,-15.39cqw) rotateY(10.50deg)}58.33%{transform:translate3d(-41.36cqw,0,-11.62cqw) rotateY(11.00deg)}62.50%{transform:translate3d(-42.86cqw,0,-8.17cqw) rotateY(11.50deg)}66.67%{transform:translate3d(-44.41cqw,0,-5.00cqw) rotateY(12.00deg)}70.83%{transform:translate3d(-46.04cqw,0,-2.10cqw) rotateY(12.50deg)}75.00%{transform:translate3d(-47.75cqw,0,0.57cqw) rotateY(13.00deg)}79.17%{transform:translate3d(-49.57cqw,0,3.01cqw) rotateY(13.50deg)}83.33%{transform:translate3d(-51.52cqw,0,5.25cqw) rotateY(14.00deg)}87.50%{transform:translate3d(-53.65cqw,0,7.31cqw) rotateY(14.50deg)}91.67%{transform:translate3d(-56.05cqw,0,9.19cqw) rotateY(15.00deg)}95.83%{transform:translate3d(-58.93cqw,0,10.92cqw) rotateY(15.50deg)}100.00%{transform:translate3d(-64.00cqw,0,12.50cqw) rotateY(16.00deg)}}
+</style>
+</helmet>
+<template id="__bundler_thumbnail"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" fill="#0b1220" /><text x="50" y="58" text-anchor="middle" font-family="Impact, sans-serif" font-size="26" fill="#e0be6e">BF</text></svg></template>
+<div style="position: relative; width: 100%; overflow-x: clip; background-color: #06080c;">
+  <div class="bf-bg" style="background-image: url('assets/marbre.jpg');" aria-hidden="true"></div>
+  <div class="bf-bg-veil" aria-hidden="true"></div>
+
+  <div style="position: relative; z-index: 1;">
+
+    <header style="position: sticky; top: 0; z-index: 40; display: flex; align-items: center; gap: 12px; padding: 10px clamp(14px, 4vw, 40px); background: rgba(5,7,11,0.7); backdrop-filter: blur(14px); border-bottom: 1px solid rgba(201,162,74,0.28);">
+      <a href="#accueil" style="display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0;">
+        <img src="assets/logo.jpg" alt="Logo Barber Factory, barber shop à Albi" width="46" height="46" style="width: 46px; height: 46px; border-radius: 50%; border: 1px solid rgba(201,162,74,0.55);">
+        <span style="font-family: Oswald, sans-serif; font-size: clamp(15px, 3.6vw, 19px); letter-spacing: 0.16em; text-transform: uppercase; color: #f4f1ea; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Barber Factory</span>
+      </a>
+      <a href="https://www.planity.com/barber-factory-81000-albi" target="_blank" rel="noopener" style="display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding: 0 clamp(12px, 3vw, 22px); background: linear-gradient(180deg, #d8b25c, #b58c36); color: #0a0c11; font-family: Oswald, sans-serif; font-size: clamp(12px, 3vw, 14px); font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; border-radius: 3px; white-space: nowrap;">Prendre RDV</a>
+      <button type="button" onClick="{{ toggleMenu }}" aria-label="Ouvrir le menu" aria-expanded="{{ menuOpen }}" style="width: 46px; height: 46px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px; background: rgba(255,255,255,0.04); border: 1px solid rgba(244,241,234,0.22); border-radius: 3px; cursor: pointer; flex: none;">
+        <span style="display: block; width: 20px; height: 1.5px; background: #f4f1ea;"></span>
+        <span style="display: block; width: 20px; height: 1.5px; background: #f4f1ea;"></span>
+        <span style="display: block; width: 20px; height: 1.5px; background: #f4f1ea;"></span>
+      </button>
+    </header>
+
+    <sc-if value="{{ menuOpen }}" hint-placeholder-val="{{ false }}">
+      <nav style="position: sticky; top: 66px; z-index: 39; display: grid; gap: 2px; padding: 10px clamp(14px, 4vw, 40px) 16px; background: rgba(5,7,11,0.96); border-bottom: 1px solid rgba(201,162,74,0.28);">
+        <a href="#accueil" onClick="{{ closeMenu }}" style="display: flex; align-items: center; min-height: 48px; color: #f4f1ea; font-family: Oswald, sans-serif; font-size: 15px; letter-spacing: 0.12em; text-transform: uppercase; border-bottom: 1px solid rgba(244,241,234,0.08);">Accueil</a>
+        <a href="#prestations" onClick="{{ closeMenu }}" style="display: flex; align-items: center; min-height: 48px; color: #f4f1ea; font-family: Oswald, sans-serif; font-size: 15px; letter-spacing: 0.12em; text-transform: uppercase; border-bottom: 1px solid rgba(244,241,234,0.08);">Prestations</a>
+        <a href="#salon" onClick="{{ closeMenu }}" style="display: flex; align-items: center; min-height: 48px; color: #f4f1ea; font-family: Oswald, sans-serif; font-size: 15px; letter-spacing: 0.12em; text-transform: uppercase; border-bottom: 1px solid rgba(244,241,234,0.08);">Le salon</a>
+        <a href="#avis" onClick="{{ closeMenu }}" style="display: flex; align-items: center; min-height: 48px; color: #f4f1ea; font-family: Oswald, sans-serif; font-size: 15px; letter-spacing: 0.12em; text-transform: uppercase; border-bottom: 1px solid rgba(244,241,234,0.08);">Avis</a>
+        <a href="#galerie" onClick="{{ closeMenu }}" style="display: flex; align-items: center; min-height: 48px; color: #f4f1ea; font-family: Oswald, sans-serif; font-size: 15px; letter-spacing: 0.12em; text-transform: uppercase; border-bottom: 1px solid rgba(244,241,234,0.08);">Galerie</a>
+        <a href="#contact" onClick="{{ closeMenu }}" style="display: flex; align-items: center; min-height: 48px; color: #f4f1ea; font-family: Oswald, sans-serif; font-size: 15px; letter-spacing: 0.12em; text-transform: uppercase;">Contact</a>
+      </nav>
+    </sc-if>
+
+    <section id="accueil" data-screen-label="Hero" style="position: relative; min-height: clamp(560px, 88vh, 780px); display: flex; align-items: flex-end; overflow: hidden;">
+      <picture>
+        <source media="(min-width: 900px)" srcset="assets/equipe-action.webp">
+        <img src="assets/prestation-verticale.webp" alt="Barbier de Barber Factory en pleine prestation dans le salon d'Albi" style="position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center 30%;">
+      </picture>
+      <div style="position: absolute; inset: 0; background: linear-gradient(180deg, rgba(4,6,10,0.55) 0%, rgba(4,6,10,0.4) 35%, rgba(4,6,10,0.92) 82%, #06080c 100%);"></div>
+      <div style="position: relative; width: 100%; max-width: 1200px; margin: 0 auto; padding: 0 clamp(16px, 4vw, 40px) clamp(34px, 6vw, 64px);">
+        <div style="display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px; margin-bottom: 18px; border: 1px solid rgba(201,162,74,0.45); border-radius: 999px; font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase; color: #e0be6e;">Barber shop · Albi</div>
+        <h1 style="font-size: clamp(38px, 11vw, 82px); line-height: 0.98; text-transform: uppercase; max-width: 15ch; text-wrap: balance;">Votre style,<br><span style="color: #e0be6e;">notre savoir-faire</span></h1>
+        <p style="margin-top: 16px; max-width: 46ch; font-size: clamp(15px, 4vw, 19px); line-height: 1.55; color: rgba(244,241,234,0.82);">Coupes sur mesure, taille de barbe et soins pour homme, dans un salon noir, bleu et doré au cœur d'Albi.</p>
+        <div style="display: flex; flex-wrap: wrap; gap: 12px; margin-top: 26px;">
+          <a href="https://www.planity.com/barber-factory-81000-albi" target="_blank" rel="noopener" style="display: inline-flex; align-items: center; justify-content: center; min-height: 54px; flex: 1 1 200px; padding: 0 26px; background: linear-gradient(180deg, #d8b25c, #b58c36); color: #0a0c11; font-family: Oswald, sans-serif; font-size: 15px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; border-radius: 3px;">Prendre rendez-vous</a>
+          <a href="#prestations" style="display: inline-flex; align-items: center; justify-content: center; min-height: 54px; flex: 1 1 200px; padding: 0 26px; background: rgba(255,255,255,0.05); border: 1px solid rgba(244,241,234,0.3); color: #f4f1ea; font-family: Oswald, sans-serif; font-size: 15px; font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase; border-radius: 3px;">Voir les prestations</a>
+        </div>
+      </div>
+    </section>
+
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1px; background: rgba(201,162,74,0.28); border-block: 1px solid rgba(201,162,74,0.28); backdrop-filter: blur(2px);">
+      <div class="bf-notes">
+        <span class="bf-note">
+          <span class="bf-note-val">4,9</span>
+          <span class="bf-note-txt">/ 5 sur Planity<br><span class="bf-note-sub">234 avis</span></span>
+        </span>
+        <span class="bf-note-sep" aria-hidden="true"></span>
+        <span class="bf-note">
+          <span class="bf-note-val">5,0</span>
+          <span class="bf-note-txt">/ 5 sur Google<br><span class="bf-note-sub">373 avis</span></span>
+        </span>
+      </div>
+      <div style="display: flex; align-items: center; justify-content: center; text-align: center; padding: 20px clamp(16px, 4vw, 28px); background: rgba(6,9,14,0.72); font-size: 16px; line-height: 1.45; color: #f4f1ea;">Réservation en ligne 24h/24</div>
+      <a class="bf-addr" href="https://www.google.com/maps/search/?api=1&amp;query=Barber+Factory%2C+5+Avenue+G%C3%A9n%C3%A9ral+de+Gaulle%2C+81000+Albi" target="_blank" rel="noopener" aria-label="Ouvrir l&#39;itinéraire vers Barber Factory, 5 avenue Général de Gaulle, 81000 Albi, dans Google Maps"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#e0be6e" stroke-width="1.6" aria-hidden="true"><path d="M12 21s7-6.2 7-11a7 7 0 1 0-14 0c0 4.8 7 11 7 11z"></path><circle cx="12" cy="10" r="2.6"></circle></svg><span class="bf-addr-txt">5 avenue Général de Gaulle, Albi</span></a>
+    </div>
+
+    <section id="prestations" data-screen-label="Prestations" style="max-width: 1200px; margin: 0 auto; padding: clamp(48px, 9vw, 96px) clamp(16px, 4vw, 40px);">
+      <div class="bf-cs" id="bf-cs">
+        <div class="bf-cs-head">
+          <p style="font-size: 11px; letter-spacing: 0.22em; text-transform: uppercase; color: #e0be6e;">Prestations &amp; tarifs</p>
+          <h2 style="margin-top: 10px; font-size: clamp(28px, 7.5vw, 46px); line-height: 1.05; text-transform: uppercase;">Deux forfaits, un seul standard</h2>
+        </div>
+        <div class="bf-cs-card">
+        <div class="bf-cs-screen">
+        <div class="bf-cs-grid">
+        <sc-for list="{{ forfaits }}" as="f" hint-placeholder-count="2">
+          <div style="display: flex; flex-direction: column; min-width: 0; padding: clamp(16px, 4.5vw, 26px); background: rgba(6,9,14,0.62); border: 1px solid rgba(201,162,74,0.26); border-radius: 4px;">
+            <h3 style="font-size: clamp(20px, 5vw, 26px); text-transform: uppercase; color: #f4f1ea;">{{ f.titre }}</h3>
+            <p style="margin-top: 6px; font-size: 13px; color: rgba(244,241,234,0.55);">{{ f.note }}</p>
+            <div style="display: grid; gap: 2px; margin: 22px 0 26px;">
+              <sc-for list="{{ f.items }}" as="p" hint-placeholder-count="3">
+                <div style="display: flex; align-items: baseline; gap: 12px; padding: 13px 0; border-bottom: 1px solid rgba(244,241,234,0.09);">
+                  <span style="flex: 1; font-size: 15px; line-height: 1.4; color: rgba(244,241,234,0.9);">{{ p.nom }}<br><span style="font-size: 12px; letter-spacing: 0.06em; color: rgba(244,241,234,0.45);">{{ p.duree }}</span></span>
+                  <span style="font-family: Oswald, sans-serif; font-size: 21px; color: #e0be6e; white-space: nowrap;">{{ p.prix }}</span>
+                </div>
+              </sc-for>
+            </div>
+            <a href="https://www.planity.com/barber-factory-81000-albi" target="_blank" rel="noopener" style="display: flex; align-items: center; justify-content: center; min-height: 52px; margin-top: auto; background: rgba(47,123,255,0.14); border: 1px solid rgba(47,123,255,0.55); color: #cfe0ff; font-family: Oswald, sans-serif; font-size: 14px; letter-spacing: 0.12em; text-transform: uppercase; border-radius: 3px;" style-hover="background: rgba(47,123,255,0.26);">Réserver sur Planity</a>
+          </div>
+        </sc-for>
+        </div>
+        </div>
+        </div>
+      </div>
+    </section>
+
+    <div class="bf-stage">
+    <section id="salon" data-screen-label="Le salon" style="position: relative;">
+      <div style="max-width: 1200px; margin: 0 auto; padding: 0 clamp(16px, 4vw, 40px) clamp(20px, 4vw, 36px);">
+        <p style="font-size: 11px; letter-spacing: 0.22em; text-transform: uppercase; color: #e0be6e;">L'expérience Barber Factory</p>
+        <h2 style="margin-top: 10px; font-size: clamp(28px, 7.5vw, 46px); line-height: 1.05; text-transform: uppercase; max-width: 22ch;">Plus qu'une coupe, un lieu où l'on reste</h2>
+        <p style="margin-top: 18px; max-width: 58ch; font-size: clamp(15px, 4vw, 18px); line-height: 1.6; color: rgba(244,241,234,0.8);">Dans un cadre moderne et convivial, l'équipe Barber Factory met son savoir-faire au service de votre style : coupe sur mesure, taille de barbe, coiffage et soins du visage.</p>
+      </div>
+      <div class="bf-imm" id="bf-imm">
+        <div class="bf-imm-sticky">
+          <div class="bf-imm-layer">
+            <div class="bf-imm-item bf-imm-1"><img src="assets/espace-detente.jpg" alt="Espace détente de Barber Factory avec billard, banquette et sol en marbre noir, bleu et doré"></div>
+          </div>
+          <div class="bf-imm-layer">
+            <div class="bf-imm-item bf-imm-2"><img src="assets/fauteuils-bleus.jpg" alt="Fauteuils de barbier bleus et sol en marbre du salon Barber Factory"></div>
+          </div>
+          <div class="bf-imm-layer">
+            <div class="bf-imm-item bf-imm-3"><img src="./unnamed-21--mtfx4qxs-93p7.webp" alt="Plafond hexagonal lumineux et sol en marbre du salon"></div>
+          </div>
+          <div class="bf-imm-layer">
+            <div class="bf-imm-item bf-imm-4"><img src="assets/postes-travail.webp" alt="Postes de travail et miroirs du salon Barber Factory à Albi"></div>
+          </div>
+          <div class="bf-imm-layer">
+            <div class="bf-imm-item bf-imm-5"><img src="assets/salon-billard-bacs.webp" alt="Billard, bacs à shampoing et panneaux réseaux sociaux du salon Barber Factory"></div>
+          </div>
+          <div class="bf-imm-layer">
+            <div class="bf-imm-item bf-imm-6"><img src="assets/salon-maillot-chicago.webp" alt="Fauteuil de barbier, plafond hexagonal lumineux et maillot Chicago encadré"></div>
+          </div>
+          <div class="bf-imm-layer">
+            <div class="bf-imm-item bf-imm-7"><img src="assets/accueil-comptoir.webp" alt="Comptoir d'accueil Barber Factory et présentoir de produits"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section data-screen-label="Produits" class="bf-imm-apres" style="border-block: 1px solid rgba(201,162,74,0.28); background: rgba(6,9,14,0.55);">
+      <div style="max-width: 1200px; margin: 0 auto; padding: clamp(40px, 8vw, 80px) clamp(16px, 4vw, 40px); display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: clamp(24px, 5vw, 48px); align-items: center;">
+        <div>
+          <p style="font-size: 11px; letter-spacing: 0.22em; text-transform: uppercase; color: #e0be6e;">Qualité</p>
+          <h2 style="margin-top: 10px; font-size: clamp(26px, 6.5vw, 40px); line-height: 1.08; text-transform: uppercase;">Des produits professionnels</h2>
+          <p style="margin-top: 16px; max-width: 46ch; font-size: clamp(15px, 4vw, 17px); line-height: 1.6; color: rgba(244,241,234,0.78);">Cires, poudres et soins professionnels utilisés au salon pour la finition de chaque coupe : tenue, matité et confort du cuir chevelu.</p>
+          <div style="display: flex; align-items: center; gap: 14px; margin-top: 24px;">
+            <img src="assets/produit-powder.jpg" alt="Poudre coiffante professionnelle utilisée au salon" style="width: 74px; height: 100px; object-fit: cover; border: 1px solid rgba(201,162,74,0.3); border-radius: 3px;">
+            <p style="font-size: 13px; line-height: 1.5; color: rgba(244,241,234,0.55); max-width: 28ch;">Finition poudre matifiante, wax tenue forte, soin du visage sur les forfaits prestige.</p>
+          </div>
+        </div>
+        <img src="assets/produits-wax.webp" alt="Pots de cire coiffante professionnelle rangés au salon" style="width: 100%; height: clamp(260px, 45vw, 420px); object-fit: cover; border: 1px solid rgba(201,162,74,0.22); border-radius: 4px;">
+      </div>
+    </section>
+    </div>
+
+    <section id="avis" data-screen-label="Avis" style="max-width: 1200px; margin: 0 auto; padding: clamp(48px, 9vw, 96px) clamp(16px, 4vw, 40px);">
+      <p style="font-size: 11px; letter-spacing: 0.22em; text-transform: uppercase; color: #e0be6e;">Avis clients</p>
+      <h2 style="margin-top: 10px; font-size: clamp(28px, 7.5vw, 46px); line-height: 1.05; text-transform: uppercase;">Ce que disent les clients</h2>
+      <div class="bf-tstats">
+        <div class="bf-tstat bf-tstat-planity">
+          <span class="bf-tstat-val">4,9</span>
+          <span class="bf-tstat-meta">/ 5 &middot; 234 avis<br><span style="letter-spacing: 0.14em; text-transform: uppercase; color: #6f9dff;">Planity</span></span>
+          <a class="bf-tstat-link" href="https://www.planity.com/barber-factory-81000-albi" target="_blank" rel="noopener">Voir la fiche Planity</a>
+        </div>
+        <div class="bf-tstat">
+          <span class="bf-tstat-val">5,0</span>
+          <span class="bf-tstat-meta">/ 5 &middot; 373 avis<br><span style="letter-spacing: 0.14em; text-transform: uppercase; color: #e0be6e;">Google</span></span>
+          <a class="bf-tstat-link" href="https://www.google.com/maps/search/?api=1&amp;query=Barber+Factory%2C+5+Avenue+G%C3%A9n%C3%A9ral+de+Gaulle%2C+81000+Albi" target="_blank" rel="noopener">Voir les avis Google</a>
+        </div>
+      </div>
+      <div class="bf-tbar">
+        <p class="bf-tbar-note">Avis Google &amp; Planity</p>
+        <button type="button" class="bf-tpause" onClick="{{ toggleAvisPause }}" aria-pressed="{{ avisPausedAttr }}" aria-label="{{ avisPauseAria }}">{{ avisPauseLabel }}</button>
+      </div>
+      <div class="bf-tcols" data-paused="{{ avisPausedAttr }}">
+        <sc-for list="{{ avisColonnes }}" as="col" hint-placeholder-count="3">
+          <div class="bf-tcol">
+            <div class="bf-ttrack" style="--dur: {{ col.duree }};">
+              <sc-for list="{{ col.items }}" as="t" hint-placeholder-count="12">
+                <div class="{{ t.cls }}">
+                  <p class="bf-tcard-txt">&laquo;&nbsp;{{ t.texte }}&nbsp;&raquo;</p>
+                  <div class="bf-tcard-foot">
+                    <span class="bf-tcard-nom">{{ t.nom }}</span>
+                    <span class="bf-tcard-src">{{ t.source }}</span>
+                  </div>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+    </section>
+
+    <section id="galerie" data-screen-label="Galerie" style="padding: 0 0 clamp(48px, 9vw, 96px);">
+      <div style="max-width: 1200px; margin: 0 auto; padding: 0 clamp(16px, 4vw, 40px);">
+        <p style="font-size: 11px; letter-spacing: 0.22em; text-transform: uppercase; color: #e0be6e;">Galerie</p>
+        <h2 style="margin-top: 10px; font-size: clamp(28px, 7.5vw, 46px); line-height: 1.05; text-transform: uppercase;">Exemples de coupes</h2>
+        <p style="margin-top: 14px; max-width: 52ch; font-size: clamp(15px, 4vw, 17px); line-height: 1.6; color: rgba(244,241,234,0.75);">Dégradés, fondus, barbe dessinée : quelques réalisations faites au salon. Faites défiler pour les parcourir.</p>
+      </div>
+      <div class="bf-strm" style="margin-top: clamp(24px, 5vw, 40px);">
+        <div class="bf-strm-stage">
+          <div class="bf-strm-inner">
+            <sc-for list="{{ fluxDroite }}" as="c" hint-placeholder-count="12">
+              <div class="bf-strm-card bf-strm-r" style="--delay: {{ c.delay }};"><img src="{{ c.src }}" alt="{{ c.alt }}" loading="lazy" decoding="async" draggable="false"></div>
+            </sc-for>
+            <sc-for list="{{ fluxGauche }}" as="c" hint-placeholder-count="12">
+              <div class="bf-strm-card bf-strm-l" style="--delay: {{ c.delay }};" aria-hidden="true"><img src="{{ c.src }}" alt="" loading="lazy" decoding="async" draggable="false"></div>
+            </sc-for>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="contact" data-screen-label="Contact" style="border-top: 1px solid rgba(201,162,74,0.28); background: rgba(6,9,14,0.55);">
+      <div style="max-width: 1200px; margin: 0 auto; padding: clamp(44px, 8vw, 88px) clamp(16px, 4vw, 40px); display: grid; grid-template-columns: repeat(auto-fit, minmax(290px, 1fr)); gap: clamp(28px, 5vw, 56px);">
+        <div>
+          <p style="font-size: 11px; letter-spacing: 0.22em; text-transform: uppercase; color: #e0be6e;">Informations pratiques</p>
+          <h2 style="margin-top: 10px; font-size: clamp(26px, 6.5vw, 40px); line-height: 1.08; text-transform: uppercase;">Barber Factory</h2>
+          <p style="margin-top: 16px; font-size: 17px; line-height: 1.6; color: rgba(244,241,234,0.85);">5 avenue Général de Gaulle<br>81000 Albi</p>
+          <p style="margin-top: 14px; font-size: 17px;"><a href="tel:0685040866">06 85 04 08 66</a></p>
+          <div style="display: grid; gap: 10px; margin-top: 26px;">
+            <a href="tel:0685040866" style="display: flex; align-items: center; justify-content: center; min-height: 52px; background: rgba(255,255,255,0.05); border: 1px solid rgba(244,241,234,0.28); color: #f4f1ea; font-family: Oswald, sans-serif; font-size: 14px; letter-spacing: 0.12em; text-transform: uppercase; border-radius: 3px;">Appeler</a>
+            <a href="https://www.google.com/maps/search/?api=1&amp;query=Barber+Factory%2C+5+Avenue+G%C3%A9n%C3%A9ral+de+Gaulle%2C+81000+Albi" target="_blank" rel="noopener" style="display: flex; align-items: center; justify-content: center; min-height: 52px; background: rgba(255,255,255,0.05); border: 1px solid rgba(244,241,234,0.28); color: #f4f1ea; font-family: Oswald, sans-serif; font-size: 14px; letter-spacing: 0.12em; text-transform: uppercase; border-radius: 3px;">Obtenir l'itinéraire</a>
+            <a href="https://www.planity.com/barber-factory-81000-albi" target="_blank" rel="noopener" style="display: flex; align-items: center; justify-content: center; min-height: 52px; background: linear-gradient(180deg, #d8b25c, #b58c36); color: #0a0c11; font-family: Oswald, sans-serif; font-size: 14px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; border-radius: 3px;">Prendre rendez-vous</a>
+          </div>
+        </div>
+        <div>
+          <p style="font-size: 11px; letter-spacing: 0.22em; text-transform: uppercase; color: #e0be6e;">Horaires</p>
+          <div style="display: grid; gap: 2px; margin-top: 16px;">
+            <sc-for list="{{ horaires }}" as="h" hint-placeholder-count="7">
+              <div style="display: flex; justify-content: space-between; gap: 16px; padding: 12px 0; border-bottom: 1px solid rgba(244,241,234,0.09); font-size: 15px;">
+                <span style="color: rgba(244,241,234,0.82);">{{ h.jour }}</span>
+                <span style="color: #e0be6e;">{{ h.heures }}</span>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section data-screen-label="CTA final" style="position: relative; overflow: hidden; border-top: 1px solid rgba(201,162,74,0.28);">
+      <img src="assets/billard-bleu.webp" alt="Table de billard bleue du salon Barber Factory" loading="lazy" style="position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center 60%;">
+      <div style="position: absolute; inset: 0; background: rgba(4,6,10,0.8);"></div>
+      <div style="position: relative; max-width: 760px; margin: 0 auto; padding: clamp(56px, 11vw, 120px) clamp(16px, 4vw, 40px); text-align: center;">
+        <h2 style="font-size: clamp(30px, 8.5vw, 56px); line-height: 1.03; text-transform: uppercase;">Prêt pour votre <span style="color: #e0be6e;">prochaine coupe</span> ?</h2>
+        <p style="margin-top: 16px; font-size: clamp(15px, 4vw, 18px); line-height: 1.6; color: rgba(244,241,234,0.8);">Réservation en ligne, 24h/24, en moins d'une minute.</p>
+        <a href="https://www.planity.com/barber-factory-81000-albi" target="_blank" rel="noopener" style="display: inline-flex; align-items: center; justify-content: center; min-height: 58px; margin-top: 28px; padding: 0 clamp(28px, 7vw, 52px); background: linear-gradient(180deg, #d8b25c, #b58c36); color: #0a0c11; font-family: Oswald, sans-serif; font-size: clamp(15px, 4vw, 17px); font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; border-radius: 3px;">Réserver sur Planity</a>
+      </div>
+    </section>
+
+    <footer style="background: rgba(4,6,10,0.8); border-top: 1px solid rgba(201,162,74,0.28);">
+      <div style="max-width: 1200px; margin: 0 auto; padding: clamp(36px, 6vw, 64px) clamp(16px, 4vw, 40px); display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 28px;">
+        <div>
+          <img src="assets/logo.jpg" alt="Logo Barber Factory" width="64" height="64" style="width: 64px; height: 64px; border-radius: 50%; border: 1px solid rgba(201,162,74,0.5);">
+          <p style="margin-top: 14px; font-size: 14px; line-height: 1.6; color: rgba(244,241,234,0.62);">5 avenue Général de Gaulle<br>81000 Albi<br><a href="tel:0685040866">06 85 04 08 66</a></p>
+        </div>
+        <div style="font-size: 14px; line-height: 1.9; color: rgba(244,241,234,0.62);">
+          <p style="letter-spacing: 0.16em; text-transform: uppercase; color: rgba(244,241,234,0.85); font-size: 12px; margin-bottom: 8px;">Horaires</p>
+          Lundi &amp; samedi : 10h–19h<br>Mardi au vendredi : 10h–20h<br>Dimanche : fermé
+        </div>
+        <div style="display: grid; gap: 8px; align-content: start; font-size: 14px;">
+          <p style="letter-spacing: 0.16em; text-transform: uppercase; color: rgba(244,241,234,0.85); font-size: 12px;">Liens</p>
+          <a href="https://www.planity.com/barber-factory-81000-albi" target="_blank" rel="noopener">Réserver sur Planity</a>
+          <a href="#prestations">Prestations &amp; tarifs</a>
+          <a href="#contact">Nous trouver</a>
+        </div>
+      </div>
+      <div style="max-width: 1200px; margin: 0 auto; padding: 0 clamp(16px, 4vw, 40px) 28px; display: flex; flex-wrap: wrap; gap: 8px 20px; font-size: 12px; color: rgba(244,241,234,0.4);">
+        <span>© 2026 Barber Factory, Albi</span>
+        <a href="#accueil" style="color: rgba(244,241,234,0.55);">Mentions légales</a>
+        <a href="#accueil" style="color: rgba(244,241,234,0.55);">Politique de confidentialité</a>
+      </div>
+    </footer>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{}">
+function bfClamp01(v) { return v < 0 ? 0 : v > 1 ? 1 : v; }
+
+class Component extends DCLogic {
+  state = { menuOpen: false, avisPaused: false, avisCols: 1 };
+
+  componentDidMount() {
+    this.mqReduce = window.matchMedia('(prefers-reduced-motion: reduce)');
+    this.mqCols2 = window.matchMedia('(min-width: 700px)');
+    this.mqCols3 = window.matchMedia('(min-width: 1020px)');
+
+    this.syncCols = () => {
+      const n = this.mqCols3.matches ? 3 : this.mqCols2.matches ? 2 : 1;
+      if (n !== this.state.avisCols) this.setState({ avisCols: n });
+    };
+    this.mqCols2.addEventListener('change', this.syncCols);
+    this.mqCols3.addEventListener('change', this.syncCols);
+    this.syncCols();
+
+    // Pilotage des effets au scroll : ecriture directe de variables CSS,
+    // aucun rendu React par frame, aucune transformation du fond global.
+    this.tick = () => {
+      this.raf = 0;
+      const vh = window.innerHeight || 1;
+
+      const cs = document.getElementById('bf-cs');
+      if (cs) {
+        // desktop : un seul ecran, comportement inchange
+        const p = bfClamp01((vh - cs.getBoundingClientRect().top) / (vh * 0.78));
+        cs.style.setProperty('--p', p.toFixed(4));
+        // mobile : une plaque par forfait, chacune avec sa propre progression,
+        // declenchee plus tard (quand la plaque est bien entree dans l ecran).
+        const plaques = cs.querySelectorAll('.bf-cs-grid > div');
+        for (let i = 0; i < plaques.length; i++) {
+          const t = plaques[i].getBoundingClientRect().top;
+          const pp = bfClamp01((vh * 0.80 - t) / (vh * 0.52));
+          plaques[i].style.setProperty('--pp', pp.toFixed(4));
+        }
+      }
+
+      const imm = document.getElementById('bf-imm');
+      if (imm) {
+        const r = imm.getBoundingClientRect();
+        const course = r.height - vh;
+        const mobile = window.innerWidth < 820;
+        // Sur mobile la fin de l epinglage est reservee au fondu enchaine :
+        // le zoom doit donc etre termine avant que celui-ci commence.
+        const fondu = mobile ? vh * 0.45 : 0;
+        const zoom = Math.max(1, course - fondu);
+        imm.style.setProperty('--p', bfClamp01(-r.top / zoom).toFixed(4));
+        // Desktop : fondu pendant la sortie du conteneur (inchange).
+        imm.style.setProperty('--o', (1 - bfClamp01((-r.top - course) / vh)).toFixed(4));
+        // Mobile : avancement du fondu enchaine image -> section Qualite.
+        const stage = imm.closest('.bf-stage');
+        if (stage) {
+          const f = mobile ? bfClamp01((-r.top - zoom) / fondu) : 0;
+          stage.style.setProperty('--fade', f.toFixed(4));
+        }
+      }
+    };
+    this.onScroll = () => { if (!this.raf) this.raf = requestAnimationFrame(this.tick); };
+
+    if (!this.mqReduce.matches) {
+      window.addEventListener('scroll', this.onScroll, { passive: true });
+      window.addEventListener('resize', this.onScroll);
+      window.addEventListener('orientationchange', this.onScroll);
+      this.tick();
+    }
+  }
+
+  componentWillUnmount() {
+    if (this.raf) cancelAnimationFrame(this.raf);
+    window.removeEventListener('scroll', this.onScroll);
+    window.removeEventListener('resize', this.onScroll);
+    window.removeEventListener('orientationchange', this.onScroll);
+    this.mqCols2.removeEventListener('change', this.syncCols);
+    this.mqCols3.removeEventListener('change', this.syncCols);
+  }
+
+  renderVals() {
+    const avisPlanity = [
+      { nom: "Client Planity", texte: "Très beau salon et Hadj un coiffeur d'exception" },
+      { nom: "Client Planity", texte: "Coupe avec Hadj toujours au top 👌" },
+      { nom: "Client Planity", texte: "Excellent très professionnel" }
+    ];
+    const avisGoogle = [
+      { nom: "Julien Massarin", texte: "Salon vraiment magnifique, prestation coiffure plus barbe au top rien à dire, François est vraiment bien. Merci pour tout." },
+      { nom: "Cyril M", texte: "Au top ce salon ! L'équipe est super sympa. Hadj m'a fait une coupe nickel, un vrai champion. Je reviendrai sans hésiter !" },
+      { nom: "Marwa Khadir", texte: "Très bonne expérience avec Hadj. Travail très propre, précis et soigné. Coupe impeccable, je reviendrai sans hésiter. Merci !" }
+    ];
+
+    // Avis reels du site, alternes Planity / Google.
+    const avisTous = [];
+    for (let i = 0; i < Math.max(avisPlanity.length, avisGoogle.length); i++) {
+      if (avisPlanity[i]) avisTous.push({ nom: avisPlanity[i].nom, texte: avisPlanity[i].texte, source: "Planity", cls: "bf-tcard bf-tcard-planity" });
+      if (avisGoogle[i]) avisTous.push({ nom: avisGoogle[i].nom, texte: avisGoogle[i].texte, source: "Google", cls: "bf-tcard" });
+    }
+
+    // Chaque colonne contient TOUS les avis, decales : rien n'est perdu
+    // quand le nombre de colonnes tombe a 1 sur mobile.
+    const durees = ["46s", "58s", "52s"];
+    const nbCols = this.state.avisCols;
+    const avisColonnes = [];
+    for (let j = 0; j < nbCols; j++) {
+      const d = (j * 2) % avisTous.length;
+      const base = avisTous.slice(d).concat(avisTous.slice(0, d));
+      avisColonnes.push({ duree: durees[j] || "50s", items: base.concat(base) });
+    }
+
+    const galerie = [
+      { src: "assets/coupe-12.webp", alt: "Dégradé bas et barbe taillée réalisés au salon" },
+      { src: "assets/coupe-13.webp", alt: "Fondu arrière sur cheveux mi-longs" },
+      { src: "assets/coupe-14.webp", alt: "Dégradé très court avec barbe sculptée" },
+      { src: "assets/coupe-15.webp", alt: "Coupe texturée avec dégradé sur les côtés" },
+      { src: "assets/coupe-16.webp", alt: "Coupe coiffée en arrière avec trait de rasoir" },
+      { src: "assets/coupe-17.webp", alt: "Dégradé bas sur cheveux épais" },
+      { src: "assets/coupe-18.webp", alt: "Coupe bouclée avec fondu propre" },
+      { src: "assets/coupe-19.webp", alt: "Finition aux ciseaux sur un dégradé" },
+      { src: "assets/coupe-20.webp", alt: "Dégradé court coiffé sur le côté" },
+      { src: "assets/coupe-10.webp", alt: "Coupe avec dessin au rasoir sur la tempe" },
+      { src: "assets/coupe-11.webp", alt: "Coupe et barbe finalisées au salon" },
+      { src: "assets/coupe-1.jpg", alt: "Dégradé net vu de dos" }
+    ];
+
+    // Deux rails : chacun parcourt les 12 photos du salon, decalees dans le temps.
+    const vitesse = 22;
+    const n = galerie.length;
+    const fluxDroite = galerie.map((ph, i) => ({
+      src: ph.src, alt: ph.alt, delay: (-(i * vitesse) / n).toFixed(2) + "s"
+    }));
+    const fluxGauche = galerie.map((ph, i) => ({
+      src: galerie[(i + 7) % n].src, delay: (-(i * vitesse) / n - 1.1).toFixed(2) + "s"
+    }));
+
+    return {
+      menuOpen: this.state.menuOpen,
+      toggleMenu: () => this.setState(s => ({ menuOpen: !s.menuOpen })),
+      closeMenu: () => this.setState({ menuOpen: false }),
+
+      avisPausedAttr: this.state.avisPaused ? "true" : "false",
+      avisPauseLabel: this.state.avisPaused ? "Lecture" : "Pause",
+      avisPauseAria: this.state.avisPaused ? "Reprendre le défilement des avis" : "Mettre en pause le défilement des avis",
+      toggleAvisPause: () => this.setState(s => ({ avisPaused: !s.avisPaused })),
+      avisColonnes: avisColonnes,
+      avisGoogle: avisGoogle,
+
+      fluxDroite: fluxDroite,
+      fluxGauche: fluxGauche,
+      galerie: galerie,
+
+      forfaits: [
+        {
+          titre: "Forfait classique",
+          note: "L'essentiel, exécuté proprement.",
+          items: [
+            { nom: "Coupe", prix: "20 €", duree: "20 min" },
+            { nom: "Barbe", prix: "15 €", duree: "10 min" },
+            { nom: "Coupe & barbe", prix: "30 €", duree: "30 min" },
+            { nom: "Coupe enfant, moins de 15 ans", prix: "15 €", duree: "20 min" }
+          ]
+        },
+        {
+          titre: "Forfait prestige",
+          note: "Shampoing, serviette chaude, soin du visage.",
+          items: [
+            { nom: "Coupe + shampoing", prix: "25 €", duree: "25 min" },
+            { nom: "Shampoing + coupe + barbe + serviette chaude", prix: "35 €", duree: "35 min" },
+            { nom: "Shampoing + coupe + barbe + serviette chaude + soin du visage", prix: "45 €", duree: "45 min" }
+          ]
+        }
+      ],
+      horaires: [
+        { jour: "Lundi", heures: "10h00 – 19h00" },
+        { jour: "Mardi", heures: "10h00 – 20h00" },
+        { jour: "Mercredi", heures: "10h00 – 20h00" },
+        { jour: "Jeudi", heures: "10h00 – 20h00" },
+        { jour: "Vendredi", heures: "10h00 – 20h00" },
+        { jour: "Samedi", heures: "10h00 – 19h00" },
+        { jour: "Dimanche", heures: "Fermé" }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

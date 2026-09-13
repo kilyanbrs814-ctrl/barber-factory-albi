@@ -1,0 +1,6 @@
+# Fichiers de travail, non publies sur le site
+.thumbnail
+*.bak
+uploads/
+# Doublons PNG non utilises (le site utilise les versions .jpg)
+assets/*.png
