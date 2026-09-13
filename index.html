@@ -275,27 +275,29 @@ p { margin: 0; }
   .bf-tcols[data-paused="true"] .bf-ttrack { animation-play-state: running; }
   .bf-ttrack { animation-duration: calc(var(--dur, 40s) * 0.45); }
 
-  /* --- 4. Galerie : photos larges, toujours espacees --- */
-  /* la bande est calee sur la hauteur reelle de la plus grande photo (81vw,
-     rotation comprise : le bord le plus proche est agrandi) pour qu aucune
-     photo ne soit rognee sur tout son trajet.
-     Le trait du haut remonte (marge reduite a 12px) et celui de la section
-     Contact remonte d autant (retrait sous la bande supprime).
+  /* --- 4. Galerie : un flux continu, du lointain vers le premier plan --- */
+  /* la bande est calee sur la hauteur reelle de la plus grande photo (56vw,
+     rotation comprise : le bord le plus proche de l oeil est agrandi, donc
+     la photo est plus haute que sa taille au centre) : aucune photo n est
+     rognee sur tout son trajet.
+     Meme retrait de 12px au-dessus et en dessous de la bande.
      Le trait du bas de la bande faisait doublon avec celui de la section
      Contact juste en dessous : on ne garde que celui du haut */
-  #galerie { padding-bottom: 0; }
-  .bf-strm { height: clamp(280px, 81vw, 700px); margin-top: 12px; border-bottom: 0; }
-  /* les photos s ecartent davantage sur les cotes (trajet elargi dans les
-     keyframes mobiles) : elles peuvent donc rester grandes sans se recouvrir */
-  .bf-strm-stage { perspective: 55cqw; perspective-origin: 50% 50%; }
-  /* 2 cartes par rail : les deux rails sont dephases pour ne jamais
-     presenter deux grandes images au meme instant */
-  .bf-strm-card:nth-child(-n+12):not(:nth-child(6n+1)) { display: none; }
-  .bf-strm-card:nth-child(n+13):not(:nth-child(6n+4)) { display: none; }
+  #galerie { padding-bottom: 12px; }
+  .bf-strm { height: clamp(200px, 56vw, 480px); margin-top: 12px; border-bottom: 0; }
+  /* perspective courte : une photo entre toute petite au fond et grandit
+     nettement en avancant. Les photos s ecartent aussi vers les cotes
+     (trajet elargi dans les keyframes mobiles) donc elles ne se recouvrent pas */
+  .bf-strm-stage { perspective: 35cqw; perspective-origin: 50% 50%; }
+  /* 3 cartes par rail (enfants 1-5-9 a droite, 15-19-23 a gauche) : une
+     photo nait en permanence dans le lointain et grandit en avancant,
+     au lieu de laisser un trou au centre entre deux passages */
+  .bf-strm-card:nth-child(-n+12):not(:nth-child(4n+1)) { display: none; }
+  .bf-strm-card:nth-child(n+13):not(:nth-child(4n+3)) { display: none; }
   .bf-strm-card {
     --dur: 16s;
     top: 50%;
-    width: 54cqw; height: 72.6cqw; margin-left: -27cqw; margin-top: -36.3cqw; border-radius: 1.6cqw;
+    width: 40cqw; height: 53.8cqw; margin-left: -20cqw; margin-top: -26.9cqw; border-radius: 1.6cqw;
   }
 }
 
