@@ -191,7 +191,8 @@ p { margin: 0; }
 .bf-strm-card {
   position: absolute; left: 50%; top: 55%; overflow: hidden; backface-visibility: hidden;
   width: 32cqw; height: 42cqw; margin-left: -16cqw; margin-top: -21cqw; border-radius: 0.9cqw;
-  animation-duration: var(--dur, 22s); animation-timing-function: linear;
+  --dur: 22s;
+  animation-duration: var(--dur); animation-timing-function: linear;
   animation-iteration-count: infinite; animation-delay: var(--delay, 0s);
 }
 .bf-strm-r { animation-name: bf-strm-rm; }
@@ -273,7 +274,9 @@ p { margin: 0; }
   .bf-ttrack { animation-duration: calc(var(--dur, 40s) * 0.45); }
 
   /* --- 4. Galerie : moins d images, plus grandes, mieux espacees --- */
-  .bf-strm { height: clamp(430px, 125vw, 600px); }
+  /* scene calee sur la hauteur reellement occupee par les photos :
+     plus de bande vide au-dessus du flux */
+  .bf-strm { height: clamp(400px, 105vw, 520px); }
   /* perspective allongee : la profondeur ecrase beaucoup moins les photos
      eloignees, donc aucune vignette minuscule au fond du flux */
   .bf-strm-stage { perspective: 70cqw; perspective-origin: 50% 50%; }
@@ -282,7 +285,9 @@ p { margin: 0; }
   .bf-strm-card:nth-child(-n+12):not(:nth-child(6n+1)) { display: none; }
   .bf-strm-card:nth-child(n+13):not(:nth-child(6n+4)) { display: none; }
   .bf-strm-card {
-    width: 52cqw; height: 70cqw; margin-left: -26cqw; margin-top: -35cqw; border-radius: 1.6cqw;
+    --dur: 16s;
+    top: 50%;
+    width: 58cqw; height: 78cqw; margin-left: -29cqw; margin-top: -39cqw; border-radius: 1.6cqw;
   }
 }
 
@@ -705,13 +710,16 @@ class Component extends DCLogic {
     ];
 
     // Deux rails : chacun parcourt les 12 photos du salon, decalees dans le temps.
-    const vitesse = 22;
+    // Les retards sont exprimes en fraction du cycle (--dur) et non en secondes :
+    // la galerie peut donc defiler plus vite sur mobile sans que l ecart entre
+    // les photos change.
     const n = galerie.length;
+    const retard = (f) => "calc(var(--dur) * " + f.toFixed(4) + ")";
     const fluxDroite = galerie.map((ph, i) => ({
-      src: ph.src, alt: ph.alt, delay: (-(i * vitesse) / n).toFixed(2) + "s"
+      src: ph.src, alt: ph.alt, delay: retard(-i / n)
     }));
     const fluxGauche = galerie.map((ph, i) => ({
-      src: galerie[(i + 7) % n].src, delay: (-(i * vitesse) / n - 1.1).toFixed(2) + "s"
+      src: galerie[(i + 7) % n].src, delay: retard(-i / n - 0.05)
     }));
 
     return {
