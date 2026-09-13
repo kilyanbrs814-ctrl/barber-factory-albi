@@ -177,9 +177,11 @@ p { margin: 0; }
 }
 
 /* --- 7. Galerie : flux d'images en perspective --- */
+#galerie { padding-bottom: clamp(48px, 9vw, 96px); }
 .bf-strm {
   position: relative; overflow: hidden; container-type: inline-size;
   height: clamp(340px, 88vw, 430px);
+  margin-top: clamp(24px, 5vw, 40px);
   border-block: 1px solid rgba(201,162,74,0.2);
 }
 @media (min-width: 820px) { .bf-strm { height: min(600px, 58vw); } }
@@ -274,11 +276,15 @@ p { margin: 0; }
   .bf-ttrack { animation-duration: calc(var(--dur, 40s) * 0.45); }
 
   /* --- 4. Galerie : photos larges, toujours espacees --- */
-  /* scene calee sur la hauteur reellement occupee par les photos :
-     plus de bande vide au-dessus du flux */
-  /* le trait du bas fait doublon avec celui de la section Contact juste
-     en dessous : on ne garde que celui du haut */
-  .bf-strm { height: clamp(260px, 70vw, 480px); border-bottom: 0; }
+  /* la bande est calee sur la hauteur reelle de la plus grande photo (81vw,
+     rotation comprise : le bord le plus proche est agrandi) pour qu aucune
+     photo ne soit rognee sur tout son trajet.
+     Le trait du haut remonte (marge reduite a 12px) et celui de la section
+     Contact remonte d autant (retrait sous la bande supprime).
+     Le trait du bas de la bande faisait doublon avec celui de la section
+     Contact juste en dessous : on ne garde que celui du haut */
+  #galerie { padding-bottom: 0; }
+  .bf-strm { height: clamp(280px, 81vw, 700px); margin-top: 12px; border-bottom: 0; }
   /* les photos s ecartent davantage sur les cotes (trajet elargi dans les
      keyframes mobiles) : elles peuvent donc rester grandes sans se recouvrir */
   .bf-strm-stage { perspective: 55cqw; perspective-origin: 50% 50%; }
@@ -289,7 +295,7 @@ p { margin: 0; }
   .bf-strm-card {
     --dur: 16s;
     top: 50%;
-    width: 62cqw; height: 83.4cqw; margin-left: -31cqw; margin-top: -41.7cqw; border-radius: 1.6cqw;
+    width: 54cqw; height: 72.6cqw; margin-left: -27cqw; margin-top: -36.3cqw; border-radius: 1.6cqw;
   }
 }
 
@@ -504,13 +510,13 @@ p { margin: 0; }
       </div>
     </section>
 
-    <section id="galerie" data-screen-label="Galerie" style="padding: 0 0 clamp(48px, 9vw, 96px);">
+    <section id="galerie" data-screen-label="Galerie">
       <div style="max-width: 1200px; margin: 0 auto; padding: 0 clamp(16px, 4vw, 40px);">
         <p style="font-size: 11px; letter-spacing: 0.22em; text-transform: uppercase; color: #e0be6e;">Galerie</p>
         <h2 style="margin-top: 10px; font-size: clamp(28px, 7.5vw, 46px); line-height: 1.05; text-transform: uppercase;">Exemples de coupes</h2>
         <p style="margin-top: 14px; max-width: 52ch; font-size: clamp(15px, 4vw, 17px); line-height: 1.6; color: rgba(244,241,234,0.75);">Dégradés, fondus, barbe dessinée : quelques réalisations faites au salon. Faites défiler pour les parcourir.</p>
       </div>
-      <div class="bf-strm" style="margin-top: clamp(24px, 5vw, 40px);">
+      <div class="bf-strm">
         <div class="bf-strm-stage">
           <div class="bf-strm-inner">
             <sc-for list="{{ fluxDroite }}" as="c" hint-placeholder-count="12">
