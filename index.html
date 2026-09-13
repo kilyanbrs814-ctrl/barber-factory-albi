@@ -273,10 +273,12 @@ p { margin: 0; }
   .bf-tcols[data-paused="true"] .bf-ttrack { animation-play-state: running; }
   .bf-ttrack { animation-duration: calc(var(--dur, 40s) * 0.45); }
 
-  /* --- 4. Galerie : 4 photos de tailles proches, toujours espacees --- */
+  /* --- 4. Galerie : photos larges, toujours espacees --- */
   /* scene calee sur la hauteur reellement occupee par les photos :
      plus de bande vide au-dessus du flux */
-  .bf-strm { height: clamp(260px, 70vw, 480px); }
+  /* le trait du bas fait doublon avec celui de la section Contact juste
+     en dessous : on ne garde que celui du haut */
+  .bf-strm { height: clamp(260px, 70vw, 480px); border-bottom: 0; }
   /* les photos s ecartent davantage sur les cotes (trajet elargi dans les
      keyframes mobiles) : elles peuvent donc rester grandes sans se recouvrir */
   .bf-strm-stage { perspective: 55cqw; perspective-origin: 50% 50%; }
